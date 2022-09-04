@@ -167,7 +167,13 @@ class Model(nn.Module, ABC):
     """Abstract methods - Scoring"""
 
     @abstractmethod
-    def score_hrt(self, hrt_batch: torch.LongTensor, *, mode: Optional[InductiveMode] = None) -> torch.FloatTensor:
+    def score_hrt(
+        self,
+        hrt_batch: torch.LongTensor,
+        *,
+        label: int = None,
+        mode: Optional[InductiveMode] = None
+    ) -> torch.FloatTensor:
         """Forward pass.
 
         This method takes head, relation and tail of each triple and calculates the corresponding score.

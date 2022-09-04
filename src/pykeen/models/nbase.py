@@ -423,7 +423,9 @@ class ERModel(
         h, r, t = self._get_representations(h=h_indices, r=r_indices, t=t_indices, mode=mode)
         return self.interaction.score(h=h, r=r, t=t, slice_size=slice_size, slice_dim=slice_dim)
 
-    def score_hrt(self, hrt_batch: torch.LongTensor, *, mode: Optional[InductiveMode] = None) -> torch.FloatTensor:
+    def score_hrt(
+        self, hrt_batch: torch.LongTensor, *, label: int = None, mode: Optional[InductiveMode] = None
+    ) -> torch.FloatTensor:
         """Forward pass.
 
         This method takes head, relation and tail of each triple and calculates the corresponding score.
@@ -442,7 +444,7 @@ class ERModel(
         # Note: we do not delegate to the general method for performance reasons
         # Note: repetition is not necessary here
         h, r, t = self._get_representations(h=hrt_batch[:, 0], r=hrt_batch[:, 1], t=hrt_batch[:, 2], mode=mode)
-        return self.interaction.score_hrt(h=h, r=r, t=t)
+        return self.interaction.score_hrt(h=h, r=r, t=t, label=label)
 
     def _check_slicing(self, slice_size: Optional[int]) -> None:
         """Raise an error, if slicing is requested, but the model does not support it."""

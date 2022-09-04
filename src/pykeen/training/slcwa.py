@@ -113,8 +113,8 @@ class SLCWATrainingLoop(TrainingLoop[SLCWASampleType, SLCWABatch]):
         negative_batch = negative_batch.to(model.device)
 
         # Compute negative and positive scores
-        positive_scores = model.score_hrt(positive_batch, mode=mode)
-        negative_scores = model.score_hrt(negative_batch, mode=mode).view(*negative_score_shape)
+        positive_scores = model.score_hrt(positive_batch, label=1, mode=mode)
+        negative_scores = model.score_hrt(negative_batch, label=0, mode=mode).view(*negative_score_shape)
 
         return (
             loss.process_slcwa_scores(

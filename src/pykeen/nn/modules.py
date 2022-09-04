@@ -204,10 +204,7 @@ class Interaction(nn.Module, Generic[HeadRepresentation, RelationRepresentation,
 
     @abstractmethod
     def forward(
-        self,
-        h: HeadRepresentation,
-        r: RelationRepresentation,
-        t: TailRepresentation,
+        self, h: HeadRepresentation, r: RelationRepresentation, t: TailRepresentation, label: int = None
     ) -> torch.FloatTensor:
         """Compute broadcasted triple scores given broadcasted representations for head, relation and tails.
 
@@ -227,6 +224,7 @@ class Interaction(nn.Module, Generic[HeadRepresentation, RelationRepresentation,
         h: HeadRepresentation,
         r: RelationRepresentation,
         t: TailRepresentation,
+        label: int = None,
         slice_size: Optional[int] = None,
         slice_dim: int = 1,
     ) -> torch.FloatTensor:
@@ -256,17 +254,14 @@ class Interaction(nn.Module, Generic[HeadRepresentation, RelationRepresentation,
 
         return torch.cat(
             [
-                self(h=h_batch, r=r_batch, t=t_batch)
+                self(h=h_batch, r=r_batch, t=t_batch, label=label)
                 for h_batch, r_batch, t_batch in parallel_slice_batches(h, r, t, split_size=slice_size, dim=slice_dim)
             ],
             dim=slice_dim,
         )
 
     def score_hrt(
-        self,
-        h: HeadRepresentation,
-        r: RelationRepresentation,
-        t: TailRepresentation,
+        self, h: HeadRepresentation, r: RelationRepresentation, t: TailRepresentation, label: int = None
     ) -> torch.FloatTensor:
         """Score a batch of triples.
 
@@ -280,7 +275,7 @@ class Interaction(nn.Module, Generic[HeadRepresentation, RelationRepresentation,
         :return: shape: (batch_size, 1)
             The scores.
         """
-        return self.score(h=h, r=r, t=t).unsqueeze(dim=-1)
+        return self.score(h=h, r=r, t=t, label=label).unsqueeze(dim=-1)
 
     def score_h(
         self,
@@ -386,6 +381,7 @@ class FunctionalInteraction(Interaction, Generic[HeadRepresentation, RelationRep
         h: HeadRepresentation,
         r: RelationRepresentation,
         t: TailRepresentation,
+        label: int = None
     ) -> torch.FloatTensor:
         """Compute broadcasted triple scores given broadcasted representations for head, relation and tails.
 
@@ -1508,6 +1504,7 @@ class MonotonicAffineTransformationInteraction(
         h: HeadRepresentation,
         r: RelationRepresentation,
         t: TailRepresentation,
+        label: int = None
     ) -> torch.FloatTensor:  # noqa: D102
         return self.log_scale.exp() * self.base(h=h, r=r, t=t) + self.bias
 
