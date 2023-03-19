@@ -23,6 +23,8 @@ from pykeen.pipeline.api import replicate_pipeline_from_config
 from pykeen.regularizers import NoRegularizer
 from pykeen.sampling.negative_sampler import NegativeSampler
 from pykeen.training import SLCWATrainingLoop
+from pykeen.losses import Loss
+from pykeen.triples.instances import InstanceWeighting
 from pykeen.triples.generation import generate_triples_factory
 from pykeen.triples.triples_factory import CoreTriplesFactory, TriplesFactory
 from pykeen.utils import resolve_device
@@ -154,6 +156,28 @@ class TestPipelineTriples(unittest.TestCase):
 
         # empty lists are falsy
         self.assertTrue(losses)
+
+    def test_instance_weighting(self):
+        """Test weighting triples during training."""
+        class ModifiedInstanceWeighting(InstanceWeighting):
+            def calculate_weights(self, mapped_triples):
+                return torch.zeros(mapped_triples.size(0), dtype=torch.float)
+
+        class ModifiedLoss(Loss):
+            def forward(self, predictions, labels, pos_triple_weights, neg_triple_weights):
+                # should sum to zero
+                return torch.sum(predictions * torch.cat([pos_triple_weights, neg_triple_weights]))
+
+        _ = pipeline(
+            training=self.training,
+            testing=self.testing,
+            validation=self.validation,
+            loss=ModifiedLoss,
+            loss_kwargs=dict(reweight_triples=True),
+            model="TransE",
+            training_kwargs=dict(num_epochs=1, use_tqdm=False, instance_weighting=ModifiedInstanceWeighting),
+            evaluation_kwargs=dict(use_tqdm=False)
+        )
 
     @needs_packages("matplotlib", "seaborn")
     def test_plot(self):

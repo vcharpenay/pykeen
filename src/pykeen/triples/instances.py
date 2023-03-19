@@ -41,8 +41,8 @@ class RelationBalancedInstanceWeighting(InstanceWeighting):
         return counts.reciprocal()[inverse]
 
 
-instance_weighting_resolver = ClassResolver.from_subclasses(InstanceWeighting)
-
+#instance_weighting_resolver = ClassResolver.from_subclasses(InstanceWeighting)
+instance_weighting_resolver = None # FIXME
 
 class SLCWABatch(NamedTuple):
     """A batch for sLCWA training."""

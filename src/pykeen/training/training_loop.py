@@ -38,6 +38,7 @@ from ..models import RGCN, Model
 from ..stoppers import Stopper
 from ..trackers import ResultTracker, tracker_resolver
 from ..triples import CoreTriplesFactory, TriplesFactory
+from ..triples.instances import InstanceWeighting, instance_weighting_resolver
 from ..typing import InductiveMode
 from ..utils import (
     format_relative_comparison,
@@ -181,12 +182,6 @@ class TrainingLoop(Generic[SampleType, BatchType], ABC):
 
         logger.debug("we don't really need the triples factory: %s", triples_factory)
 
-        # Give all unique relation types equal weight by weighting each triple inversely related to its relations
-        # frequency in the original graph: n_triples / (n_unique_relations * count(relations))
-        elements, counts = torch.unique(triples_factory.mapped_triples[:, 1], return_counts=True)
-        weights = len(triples_factory.mapped_triples[:, 1]) / (len(counts) * counts)
-        self.relation_weights = dict(zip(elements.numpy(), weights))
-
         # The internal epoch state tracks the last finished epoch of the training loop to allow for
         # seamless loading and saving of training checkpoints
         self._epoch = 0
@@ -222,6 +217,7 @@ class TrainingLoop(Generic[SampleType, BatchType], ABC):
         slice_size: Optional[int] = None,
         label_smoothing: float = 0.0,
         sampler: Optional[str] = None,
+        instance_weighting: Optional[HintOrType[InstanceWeighting]] = None,
         continue_training: bool = False,
         only_size_probing: bool = False,
         use_tqdm: bool = True,
@@ -264,6 +260,8 @@ class TrainingLoop(Generic[SampleType, BatchType], ABC):
             If larger than zero, use label smoothing.
         :param sampler: (None or 'schlichtkrull')
             The type of sampler to use. At the moment sLCWA in R-GCN is the only user of schlichtkrull sampling.
+        :param instance_weighting:
+            Procedure to weight training instances (e.g. based on the relatiive frequency of relations in a dataset)
         :param continue_training:
             If set to False, (re-)initialize the model's weights. Otherwise continue training.
         :param only_size_probing:
@@ -379,6 +377,13 @@ class TrainingLoop(Generic[SampleType, BatchType], ABC):
         if getattr(stopper, "stopped", False):
             result: Optional[List[float]] = self.losses_per_epochs
         else:
+            # TODO send to device?
+            #self.instance_weights = instance_weighting_resolver.make(instance_weighting).calculate_weights(triples_factory.mapped_triples)
+            if instance_weighting:
+                self.instance_weights = instance_weighting().calculate_weights(triples_factory.mapped_triples)
+            else:
+                self.instance_weights = None
+
             # send model to device before going into the internal training loop
             self.model = self.model.to(get_preferred_device(self.model, allow_ambiguity=True))
             result = self._train(

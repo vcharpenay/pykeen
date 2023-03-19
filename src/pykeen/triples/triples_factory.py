@@ -35,9 +35,7 @@ from torch.utils.data import Dataset
 from .instances import (
     BatchedSLCWAInstances,
     LCWAInstances,
-    SubGraphSLCWAInstances,
-    InstanceWeighting,
-    instance_weighting_resolver,
+    SubGraphSLCWAInstances
 )
 from .splitting import split
 from .utils import TRIPLES_DF_COLUMNS, load_triples, tensor_to_df
@@ -482,11 +480,9 @@ class CoreTriplesFactory(KGInfo):
         )
 
     def create_slcwa_instances(
-        self, *, sampler: Optional[str] = None, instance_weighting: Hint[InstanceWeighting] = None, **kwargs
+        self, *, sampler: Optional[str] = None, **kwargs
     ) -> Dataset:
         """Create sLCWA instances for this factory's triples."""
-
-        print(instance_weighting)
         cls = BatchedSLCWAInstances if sampler is None else SubGraphSLCWAInstances
         if "shuffle" in kwargs:
             if kwargs.pop("shuffle"):
