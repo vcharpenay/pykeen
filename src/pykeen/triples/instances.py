@@ -34,15 +34,26 @@ class InstanceWeighting:
     def calculate_weights(self, mapped_triples: MappedTriples) -> torch.FloatTensor:
         raise NotImplementedError
 
+class StaticInstanceWeighting(InstanceWeighting):
+    def __init__(self, *, weights):
+        self.weights = weights
+
+    def calculate_weights(self, mapped_triples: MappedTriples) -> torch.FloatTensor:
+        if self.weights:
+            # TODO if weights exist for all triples
+            return self.weights[mapped_triples]
+        else:
+            return 1.
 
 class RelationBalancedInstanceWeighting(InstanceWeighting):
     def calculate_weights(self, mapped_triples: MappedTriples) -> torch.FloatTensor:
         inverse, counts = mapped_triples[:, 1].unique(return_inverse=True, return_counts=True)[1:]
         return counts.reciprocal()[inverse]
 
-
-#instance_weighting_resolver = ClassResolver.from_subclasses(InstanceWeighting)
-instance_weighting_resolver = None # FIXME
+instance_weighting_resolver = ClassResolver.from_subclasses(
+    InstanceWeighting,
+    default=StaticInstanceWeighting
+)
 
 class SLCWABatch(NamedTuple):
     """A batch for sLCWA training."""

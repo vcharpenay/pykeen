@@ -179,6 +179,8 @@ class TestPipelineTriples(unittest.TestCase):
             evaluation_kwargs=dict(use_tqdm=False)
         )
 
+        # TODO assertion that loss is 0
+
     @needs_packages("matplotlib", "seaborn")
     def test_plot(self):
         """Test plotting."""

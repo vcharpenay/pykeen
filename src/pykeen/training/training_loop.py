@@ -380,7 +380,8 @@ class TrainingLoop(Generic[SampleType, BatchType], ABC):
             # TODO send to device?
             #self.instance_weights = instance_weighting_resolver.make(instance_weighting).calculate_weights(triples_factory.mapped_triples)
             if instance_weighting:
-                self.instance_weights = instance_weighting().calculate_weights(triples_factory.mapped_triples)
+                # TODO calculate per batch to include negative triples
+                self.instance_weights = instance_weighting_resolver.make(instance_weighting).calculate_weights(triples_factory.mapped_triples)
             else:
                 self.instance_weights = None
 
