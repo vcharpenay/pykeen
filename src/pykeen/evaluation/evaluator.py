@@ -386,7 +386,7 @@ class Evaluator(ABC, Generic[MetricKeyType]):
                 evaluator=self,
                 mapped_triples=mapped_triples,
                 # note: we provide the *maximum* batch and slice size here; it is reduced if necessary
-                batch_size=num_triples,
+                batch_size=batch_size,
                 slice_size=slice_size,
                 progress_bar=progress_bar,
                 targets=targets,
